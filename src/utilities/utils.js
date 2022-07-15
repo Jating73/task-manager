@@ -8,14 +8,32 @@ export {
 }
 
 
-async function sendPostRequest(url, headers, data) {
-    const options = {
+async function sendPostRequest(url, headers, data, options) {
+
+    let body;
+
+    if (options.send_form_data === 1) {
+
+        var formData = new FormData();
+
+        for (const key in data) {
+            formData.append(key, data[key]);
+        }
+        body = formData;
+
+    } else {
+        body = JSON.stringify(data);
+    }
+
+    const requestOptions = {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify(data)
-    }
-    let response = await fetch(url, options)
+        body: body
+    };
+
+    let response = await fetch(url, requestOptions)
     response = await response.json();
+
     return response;
 }
 

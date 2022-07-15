@@ -1,18 +1,38 @@
-import React, { useRef } from 'react';
-import { Container, Form, Card } from 'react-bootstrap';
+import React, { useRef, useState } from 'react';
+import { DatePicker } from 'antd';
+import { Container, Card } from 'react-bootstrap';
 import { sendPostRequest } from '../utilities/utils';
 import { API_LIST } from '../utilities/constants';
 
 function NewTask() {
 
-  const [priority, setPriority] = useState()
+  const [priority, setPriority] = useState("-1");
+  const [dueDate, setDueDate] = useState("");
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
 
   const messageInput = useRef();
-  const due_dateInput = useRef();
-  const priorityInput = useRef();
   const assigned_toInput = useRef();
 
-  async function addTask() {
+  const onChangeDateTime = (value, dateString) => {
+    setDueDate(dateString);
+  };
+
+  const onOk = (value) => { };
+
+  function onChangePriority(event) {
+    setPriority(event.target.value);
+  }
+
+  function clearFormData() {
+    setPriority("-1");
+    setDueDate("");
+    messageInput.current.value = '';
+    assigned_toInput.current.value = '';
+  }
+
+  async function addTask(taskData) {
+
     const url = process.env.REACT_APP_BASE_URL + API_LIST.CREATE_TASK;
     const token = process.env.REACT_APP_API_KEY;
     const headers = {
@@ -20,38 +40,50 @@ function NewTask() {
     };
 
     const data = {
-      message: messageInput,
-      due_date: due_dateInput,
-      priority: priorityInput,
-      assigned_to: assigned_toInput
+      message: taskData.message,
+      due_date: taskData.due_date,
+      priority: taskData.selectedPriority,
+      assigned_to: taskData.assigned_to
     };
 
-    const response = await sendPostRequest(url, headers, data);
+    const options = {
+      send_form_data: 1
+    };
+
+    const response = await sendPostRequest(url, headers, data, options);
+
     if (response.status === "success") {
-      return data.tasks;
+      setSuccess(`Added Succesfully with taskid: ${response.taskid}`);
+    } else {
+      if (response.status === "error") {
+        setError(response.error)
+      } else {
+        setError("Something went wrong! Please try again");
+      }
     }
+
+    setTimeout(() => {
+      clearFormData();
+      setSuccess(null);
+      setError(null);
+    }, 3000);
   }
 
   function submitHandler(event) {
     event.preventDefault();
 
-    console.log("Form CLicked")
-
     const message = messageInput.current.value;
-    // const due_date = due_dateInput.current.value;
-    const priority = priorityInput.current.value;
+    const due_date = dueDate;
+    const selectedPriority = priority;
     const assigned_to = assigned_toInput.current.value;
 
     const formData = {
       message,
-      // due_date,
-      priority,
+      due_date,
+      selectedPriority,
       assigned_to
     }
-
-    console.log({ formData });
-
-
+    addTask(formData);
   }
 
 
@@ -61,29 +93,28 @@ function NewTask() {
       <div className='d-flex flex-column m-auto' style={{ width: "70%" }}>
         <Card>
           <Card.Body>
+            {success && (<div className="alert alert-success" role="alert">
+              {success}
+            </div>)
+            }
+            {error && (<div className="alert alert-danger" role="alert">
+              {error}
+            </div>)
+            }
             <form onSubmit={submitHandler}>
               <div className='mt-3 mb-3'>
                 <input className="form-control" type="text" placeholder="Enter Assignee ID" ref={assigned_toInput} />
               </div>
               <div className='mt-3 mb-3'>
-                <label>Priority</label>
-                <div className='row mt-3 mb-3'>
-                  <div className='col-lg-3 col-md-3 col-sm-1'>
-                    <input type="radio" id="priority" name="priority" className="custom-control-input" ref={priorityInput} />
-                    <label className="custom-control-label" htmlFor="priority">1</label>
-                  </div>
-                  <div className='col-lg-3 col-md-3 col-sm-1'>
-                    <input type="radio" id="priority" name="priority" className="custom-control-input" ref={priorityInput} />
-                    <label className="custom-control-label" htmlFor="priority">2</label>
-                  </div>
-                  <div className='col-lg-3 col-md-3 col-sm-1'>
-                    <input type="radio" id="priority" name="priority" className="custom-control-input" ref={priorityInput} />
-                    <label className="custom-control-label" htmlFor="priority">3</label>
-                  </div>
-                </div>
+                <select className="form-control" onChange={onChangePriority} value={priority}>
+                  <option value='-1'>Select a value</option>
+                  <option value='1'>1</option>
+                  <option value='2'>2</option>
+                  <option value='3'>3</option>
+                </select>
               </div>
               <div className='form-row'>
-                date
+                <DatePicker showTime onChange={onChangeDateTime} onOk={onOk} style={{ width: '100%' }} />
               </div>
               <div className='form-row mt-3 mb-3'>
                 <label htmlFor='message'>Message</label>

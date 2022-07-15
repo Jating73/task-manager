@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom';
+import 'antd/dist/antd.css';
 import './App.css';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -11,7 +12,8 @@ function App() {
     <>
       <Navbar />
       <Routes>
-        <Route path='/' element={<Home />} />
+        {/* <Route path='/' element={<Home />} /> */}
+        <Route path='/' element={<NewTask />} />
         <Route path='/create-task' element={<NewTask />} />
         <Route path='/tasks' element={<Task />} />
         <Route path='/users' element={<User />} />
